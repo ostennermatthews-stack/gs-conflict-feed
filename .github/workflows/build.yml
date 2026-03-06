@@ -5,16 +5,13 @@ on:
     - cron: "*/6 * * * *"
   workflow_dispatch:
 
-concurrency:
-  group: feed-update
-  cancel-in-progress: true
-
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -48,22 +45,16 @@ jobs:
         run: |
           set -e
 
-          # Stash the freshly generated feed from main
           mkdir -p /tmp/publish
           cp feed.xml /tmp/publish/feed.xml
 
-          # Switch to (or create) gh-pages branch
           git fetch origin gh-pages || true
           git checkout gh-pages || git checkout --orphan gh-pages
-
-          # Clear the branch contents
           git rm -rf . || true
 
-          # Publish: multiple stable paths (avoid querystring/cache issues)
           cp /tmp/publish/feed.xml ./feed.xml
           cp /tmp/publish/feed.xml ./feed-alt.xml
 
-          # Commit and push
           git add feed.xml feed-alt.xml
           git config user.name "rss-aggregator-bot"
           git config user.email "rss-aggregator-bot@users.noreply.github.com"
